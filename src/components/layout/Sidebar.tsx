@@ -27,12 +27,16 @@ const Sidebar = () => {
 
   return (
     <aside className="sidebar glass">
-      <div className="flex items-center gap-3 mb-12">
-        <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-          <span className="text-white font-bold text-lg">TV</span>
+      <div className="flex items-center gap-4 mb-12 px-2">
+        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/30">
+          <span className="text-white font-black text-xl italic">V</span>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">TaskVibe</h1>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tighter text-white">TaskVibe</h1>
+          <div className="h-1 w-8 bg-primary/40 rounded-full mt-1" />
+        </div>
       </div>
+
 
       <nav className="sidebar-nav">
         {menuItems.map((item) => {

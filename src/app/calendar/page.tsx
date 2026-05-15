@@ -94,15 +94,15 @@ const CalendarPage = () => {
       </div>
 
       <div className="card glass p-0 overflow-hidden">
-        <div className="grid grid-cols-7 bg-glass-bg border-b border-glass-border">
+        <div className="grid grid-cols-7 bg-white/5 border-b border-white/5">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-            <div key={day} className="py-4 text-center text-sm font-bold text-text-muted uppercase tracking-widest">
+            <div key={day} className="py-5 text-center text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">
               {day}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 grid-rows-6 h-[720px]">
+        <div className="grid grid-cols-7 grid-rows-6 h-[700px]">
           {days.map((day, i) => {
             const dayTasks = getTasksForDay(day);
             const isToday = isSameDay(day, new Date());
@@ -111,31 +111,49 @@ const CalendarPage = () => {
             return (
               <div 
                 key={i} 
-                className={`p-4 border-r border-b border-glass-border relative transition-all hover:bg-glass-bg/50 ${
-                  !isCurrentMonth ? 'opacity-20' : ''
+                onClick={() => {
+                  if (isCurrentMonth) {
+                    window.dispatchEvent(new CustomEvent('open-task-modal', { 
+                      detail: { date: day } 
+                    }));
+                  }
+                }}
+                className={`p-3 border-r border-b border-white/5 relative transition-all hover:bg-white/[0.02] cursor-pointer flex flex-col ${
+                  !isCurrentMonth ? 'opacity-20 pointer-events-none' : ''
                 }`}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <span className={`text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full ${
-                    isToday ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-text-muted'
+                <div className="flex justify-center mb-2">
+                  <span className={`text-xs font-black w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                    isToday ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110' : 'text-text-muted/60'
                   }`}>
                     {format(day, 'd')}
                   </span>
                 </div>
 
-                <div className="flex flex-col gap-2 overflow-y-auto max-h-[80px] custom-scrollbar">
-                  {dayTasks.map((task) => (
-                    <motion.div 
-                      key={task._id}
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="text-[10px] p-1.5 rounded-lg bg-primary/10 border border-primary/20 text-white truncate flex items-center gap-1"
-                    >
-                      <Circle size={8} className={task.priority >= 4 ? 'fill-accent text-accent' : 'fill-primary text-primary'} />
-                      {task.title}
-                    </motion.div>
-                  ))}
-                </div>
+
+                  <div className="flex flex-col gap-1.5 mt-2">
+                    {dayTasks.slice(0, 3).map((task: any) => (
+                      <div 
+                        key={task._id} 
+                        className={`text-[10px] p-1.5 rounded-lg border flex items-center gap-1.5 transition-all hover:scale-[1.02] ${
+                          task.status === 'done' 
+                            ? 'bg-white/5 border-white/5 text-text-muted/50 line-through' 
+                            : 'bg-white/5 border-white/10 text-white shadow-sm'
+                        }`}
+                      >
+                        <div className={`w-1 h-3 rounded-full ${
+                          task.priority >= 4 ? 'bg-accent' : task.priority >= 3 ? 'bg-primary' : 'bg-secondary'
+                        }`} />
+                        <span className="truncate font-semibold">{task.title}</span>
+                      </div>
+                    ))}
+                    {dayTasks.length > 3 && (
+                      <div className="text-[10px] text-text-muted font-bold pl-1.5">
+                        + {dayTasks.length - 3} more
+                      </div>
+                    )}
+                  </div>
+
               </div>
             );
           })}

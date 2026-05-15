@@ -11,14 +11,18 @@ import {
   Trash2, 
   Edit3,
   X,
-  StickyNote
+  StickyNote,
+  Pin,
+  PinOff
 } from 'lucide-react';
+
 
 interface Note {
   _id: string;
   title: string;
   content: string;
   tags: string[];
+  isPinned?: boolean;
   createdAt: string;
 }
 
@@ -34,7 +38,13 @@ const NotesPage = () => {
       const response = await fetch('/api/notes');
       const data = await response.json();
       if (Array.isArray(data)) {
-        setNotes(data);
+        // Sort: Pinned first, then by date
+        const sorted = data.sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        setNotes(sorted);
       }
     } catch (error) {
       console.error('Failed to fetch notes:', error);
@@ -42,6 +52,22 @@ const NotesPage = () => {
       setIsLoading(false);
     }
   };
+
+  const togglePin = async (note: Note) => {
+    try {
+      const response = await fetch(`/api/notes/${note._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPinned: !note.isPinned }),
+      });
+      if (response.ok) {
+        fetchNotes();
+      }
+    } catch (error) {
+      console.error('Failed to toggle pin:', error);
+    }
+  };
+
 
   useEffect(() => {
     fetchNotes();
@@ -131,46 +157,61 @@ const NotesPage = () => {
           filteredNotes.map((note, i) => (
             <motion.div
               key={note._id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="card glass flex flex-col group relative"
+              className={`card glass flex flex-col group relative overflow-visible ${note.isPinned ? 'border-primary/30 bg-primary/5' : ''}`}
             >
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold line-clamp-1">{note.title}</h3>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {note.isPinned && (
+                <div className="absolute -top-3 -left-3 bg-primary text-white p-2 rounded-xl shadow-lg shadow-primary/40 z-10">
+                  <Pin size={14} fill="white" />
+                </div>
+              )}
+              
+              <div className="flex justify-between items-start mb-6">
+                <h3 className="text-xl font-bold line-clamp-1 group-hover:text-primary transition-colors">{note.title}</h3>
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all translate-y-[-4px] group-hover:translate-y-0">
+                  <button 
+                    onClick={() => togglePin(note)}
+                    className={`p-2 rounded-xl transition-colors ${note.isPinned ? 'text-primary bg-primary/10' : 'text-text-muted hover:bg-white/5 hover:text-white'}`}
+                  >
+                    {note.isPinned ? <Pin size={16} /> : <Pin size={16} className="rotate-45" />}
+                  </button>
                   <button 
                     onClick={() => {
                       setCurrentNote(note);
                       setIsModalOpen(true);
                     }}
-                    className="p-1.5 hover:bg-glass-bg rounded-lg text-text-muted hover:text-white"
+                    className="p-2 hover:bg-white/5 rounded-xl text-text-muted hover:text-white"
                   >
                     <Edit3 size={16} />
                   </button>
                   <button 
                     onClick={() => deleteNote(note._id)}
-                    className="p-1.5 hover:bg-red-500/10 rounded-lg text-text-muted hover:text-red-500"
+                    className="p-2 hover:bg-red-500/10 rounded-xl text-text-muted hover:text-red-500"
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
               </div>
-              <p className="text-text-muted text-sm line-clamp-4 mb-6 flex-1">
+              
+              <p className="text-text-muted text-sm leading-relaxed line-clamp-4 mb-8 flex-1">
                 {note.content}
               </p>
-              <div className="flex flex-wrap gap-2">
+              
+              <div className="flex flex-wrap gap-2 mb-4">
                 {note.tags.map((tag, j) => (
-                  <span key={j} className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-full font-bold uppercase tracking-wider">
+                  <span key={j} className="text-[10px] bg-white/5 text-text-muted border border-white/5 px-2.5 py-1 rounded-lg font-bold uppercase tracking-wider group-hover:border-primary/20 transition-colors">
                     #{tag}
                   </span>
                 ))}
               </div>
-              <div className="mt-4 text-[10px] text-text-muted/50">
-                {new Date(note.createdAt).toLocaleDateString()}
+              <div className="pt-4 border-t border-white/5 text-[10px] text-text-muted/40 font-medium">
+                Created on {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
             </motion.div>
           ))
+
         )}
       </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { 
   BarChart, 
@@ -17,39 +17,109 @@ import {
   Cell
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { TrendingUp, Target, Award, Activity } from 'lucide-react';
-
-const data = [
-  { name: 'Mon', tasks: 4, hours: 2 },
-  { name: 'Tue', tasks: 7, hours: 5 },
-  { name: 'Wed', tasks: 5, hours: 3 },
-  { name: 'Thu', tasks: 8, hours: 6 },
-  { name: 'Fri', tasks: 6, hours: 4 },
-  { name: 'Sat', tasks: 3, hours: 1 },
-  { name: 'Sun', tasks: 2, hours: 1 },
-];
-
-const categoryData = [
-  { name: 'Work', value: 45, color: 'var(--primary)' },
-  { name: 'Health', value: 25, color: 'var(--secondary)' },
-  { name: 'Personal', value: 20, color: 'var(--accent)' },
-  { name: 'Other', value: 10, color: '#4ade80' },
-];
+import { TrendingUp, Target, Award, Activity as ActivityIcon } from 'lucide-react';
+import { ITask } from '@/models/Task';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay, subDays } from 'date-fns';
 
 const AnalyticsPage = () => {
+  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [tasksRes, activitiesRes] = await Promise.all([
+          fetch('/api/tasks'),
+          fetch('/api/activities')
+        ]);
+        const tasksData = await tasksRes.json();
+        const activitiesData = await activitiesRes.json();
+        
+        if (Array.isArray(tasksData)) setTasks(tasksData);
+        if (Array.isArray(activitiesData)) setActivities(activitiesData);
+      } catch (error) {
+        console.error('Failed to fetch analytics data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Calculate Weekly Performance (Tasks completed per day)
+  const last7Days = eachDayOfInterval({
+    start: subDays(new Date(), 6),
+    end: new Date(),
+  });
+
+  const performanceData = last7Days.map(day => {
+    const tasksCount = tasks.filter(t => 
+      t.status === 'done' && t.updatedAt && isSameDay(new Date(t.updatedAt), day)
+    ).length;
+    
+    const focusMinutes = activities.filter(a => 
+      a.type === 'timer_session' && isSameDay(new Date(a.timestamp), day)
+    ).reduce((acc, curr) => acc + (curr.duration || 0), 0);
+
+    return {
+      name: format(day, 'EEE'),
+      tasks: tasksCount,
+      hours: parseFloat((focusMinutes / 60).toFixed(1)),
+    };
+  });
+
+  // Calculate Category Distribution
+  const categories = Array.from(new Set(tasks.map(t => t.category)));
+  const categoryData = categories.map((cat, i) => {
+    const count = tasks.filter(t => t.category === cat).length;
+    const colors = ['var(--primary)', 'var(--secondary)', 'var(--accent)', '#4ade80', '#fbbf24', '#8b5cf6'];
+    return {
+      name: cat,
+      value: count,
+      color: colors[i % colors.length]
+    };
+  }).filter(c => c.value > 0);
+
+  // Total stats
+  const weeklyTasks = tasks.filter(t => 
+    t.status === 'done' && t.updatedAt && new Date(t.updatedAt) >= subDays(new Date(), 7)
+  ).length;
+
+  const totalFocusMinutes = activities
+    .filter(a => a.type === 'timer_session' && new Date(a.timestamp) >= subDays(new Date(), 7))
+    .reduce((acc, curr) => acc + (curr.duration || 0), 0);
+  const avgFocusHours = (totalFocusMinutes / 7 / 60).toFixed(1);
+
+  const completionRate = tasks.length > 0 
+    ? Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100) 
+    : 0;
+
+  const activityScore = Math.min(100, Math.round((weeklyTasks * 10) + (totalFocusMinutes / 30)));
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <p className="text-text-muted">Loading analytics...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="mb-10">
         <h1 className="text-4xl font-bold mb-2">Analytics</h1>
-        <p className="text-text-muted">Insights into your productivity and habits</p>
+        <p className="text-text-muted">Insights into your productivity and habits over the last 7 days</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {[
-          { label: 'Weekly Tasks', value: '35', icon: Target, color: 'text-primary' },
-          { label: 'Avg. Focus', value: '4.2h', icon: TrendingUp, color: 'text-secondary' },
-          { label: 'Completion', value: '88%', icon: Award, color: 'text-accent' },
-          { label: 'Activity Score', value: '92', icon: Activity, color: 'text-green-400' },
+          { label: 'Weekly Tasks', value: weeklyTasks.toString(), icon: Target, color: 'text-primary' },
+          { label: 'Avg. Focus', value: `${avgFocusHours}h`, icon: TrendingUp, color: 'text-secondary' },
+          { label: 'Completion', value: `${completionRate}%`, icon: Award, color: 'text-accent' },
+          { label: 'Activity Score', value: activityScore.toString(), icon: ActivityIcon, color: 'text-green-400' },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -75,24 +145,31 @@ const AnalyticsPage = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="card glass p-8 min-h-[400px]"
         >
-          <h2 className="text-xl font-bold mb-8">Weekly Performance</h2>
+          <h2 className="text-xl font-bold mb-8">Weekly Performance (Tasks)</h2>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
+              <AreaChart data={performanceData}>
                 <defs>
                   <linearGradient id="colorTasks" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
+                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.6}/>
                     <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="name" stroke="#a0a0a0" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a0a0a0" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} dx={-10} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
-                  itemStyle={{ color: 'white' }}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(24, 24, 27, 0.9)', 
+                    border: '1px solid var(--glass-border)', 
+                    borderRadius: '16px',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                  }}
+                  itemStyle={{ color: 'white', fontWeight: 'bold' }}
                 />
-                <Area type="monotone" dataKey="tasks" stroke="var(--primary)" fillOpacity={1} fill="url(#colorTasks)" strokeWidth={3} />
+                <Area type="monotone" dataKey="tasks" stroke="var(--primary)" fillOpacity={1} fill="url(#colorTasks)" strokeWidth={4} />
+
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -106,35 +183,41 @@ const AnalyticsPage = () => {
         >
           <h2 className="text-xl font-bold mb-8">Task Distribution</h2>
           <div className="h-[300px] w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+            {categoryData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-col gap-4 ml-4 min-w-[120px]">
+                  {categoryData.map((cat, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
+                      <span className="text-sm text-text-muted truncate max-w-[80px]">{cat.name}</span>
+                      <span className="text-sm font-bold">{cat.value}</span>
+                    </div>
                   ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-col gap-4 ml-4">
-              {categoryData.map((cat, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                  <span className="text-sm text-text-muted">{cat.name}</span>
-                  <span className="text-sm font-bold">{cat.value}%</span>
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <p className="text-text-muted">No data available</p>
+            )}
           </div>
         </motion.div>
       </div>
@@ -145,10 +228,10 @@ const AnalyticsPage = () => {
         transition={{ delay: 0.2 }}
         className="card glass p-8"
       >
-        <h2 className="text-xl font-bold mb-8">Efficiency Overview</h2>
+        <h2 className="text-xl font-bold mb-8">Focus Hours Overview</h2>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
+            <BarChart data={performanceData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="name" stroke="#a0a0a0" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis stroke="#a0a0a0" fontSize={12} tickLine={false} axisLine={false} />
@@ -171,3 +254,4 @@ const AnalyticsPage = () => {
 };
 
 export default AnalyticsPage;
+

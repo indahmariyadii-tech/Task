@@ -1,20 +1,32 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Calendar, Flag, Clock } from 'lucide-react';
 
 interface AddTaskModalProps {
   isOpen: boolean;
+  initialDate?: Date;
   onClose: () => void;
   onTaskAdded: () => void;
 }
 
-const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdded }) => {
+const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, initialDate, onClose, onTaskAdded }) => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('General');
   const [priority, setPriority] = useState(3);
+  const [dueDate, setDueDate] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && initialDate) {
+      setDueDate(initialDate.toISOString().split('T')[0]);
+    } else {
+      setDueDate('');
+    }
+  }, [isOpen, initialDate]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +41,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
           title,
           category,
           priority,
+          dueDate: dueDate || undefined,
           status: 'todo',
         }),
+
       });
 
       if (response.ok) {
@@ -50,20 +64,24 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000]"
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-[1001] px-4"
-          >
+        <motion.div
+          key="backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000]"
+        />
+      )}
+      {isOpen && (
+        <motion.div
+          key="modal"
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-[1001] px-4"
+        >
+
             <div className="card glass p-8">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">New Task</h2>
@@ -117,15 +135,19 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
                   </div>
                 </div>
 
-                <div className="flex gap-4 pt-2">
-                  <button type="button" className="flex-1 btn-ghost flex items-center justify-center gap-2">
-                    <Calendar size={18} />
-                    Due Date
-                  </button>
-                  <button type="button" className="flex-1 btn-ghost flex items-center justify-center gap-2">
-                    <Clock size={18} />
-                    Duration
-                  </button>
+
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-text-muted">Due Date</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+                    <input
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      className="pl-10 w-full"
+                    />
+                  </div>
                 </div>
 
                 <button 
@@ -143,8 +165,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
               </form>
             </div>
           </motion.div>
-        </>
       )}
+
 
       <style jsx>{`
         .fixed { position: fixed; }

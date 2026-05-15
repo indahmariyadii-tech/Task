@@ -6,12 +6,21 @@ import AddTaskModal from '../tasks/AddTaskModal';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [initialDate, setInitialDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
-    const handleOpenModal = () => setIsModalOpen(true);
+    const handleOpenModal = (e: any) => {
+      if (e.detail?.date) {
+        setInitialDate(new Date(e.detail.date));
+      } else {
+        setInitialDate(undefined);
+      }
+      setIsModalOpen(true);
+    };
     window.addEventListener('open-task-modal', handleOpenModal);
     return () => window.removeEventListener('open-task-modal', handleOpenModal);
   }, []);
+
 
   return (
     <div className="min-h-screen flex">
@@ -22,12 +31,13 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       
       <AddTaskModal 
         isOpen={isModalOpen} 
+        initialDate={initialDate}
         onClose={() => setIsModalOpen(false)} 
         onTaskAdded={() => {
-          // We can use a custom event or a shared state to refresh tasks
           window.dispatchEvent(new CustomEvent('task-added'));
         }} 
       />
+
 
       <style jsx>{`
         .min-h-screen { min-height: 100vh; }

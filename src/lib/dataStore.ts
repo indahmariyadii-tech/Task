@@ -8,6 +8,10 @@ export let notes = [
   { _id: '1', title: 'Project Ideas', content: 'Build a premium task manager with glassmorphism.', tags: ['ideas', 'flow'], createdAt: new Date() },
 ];
 
+export let activities = [
+  { _id: '1', type: 'timer_session', duration: 25, timestamp: new Date() },
+];
+
 export const addTask = (task: any) => {
   const newTask = { ...task, _id: Math.random().toString(36).substr(2, 9), createdAt: new Date() };
   tasks.push(newTask);
@@ -44,4 +48,20 @@ export const updateNote = (id: string, updates: any) => {
 
 export const deleteNote = (id: string) => {
   notes = notes.filter(n => n._id !== id);
+};
+
+export interface INote {
+  _id?: string;
+  title: string;
+  content: string;
+  tags: string[];
+  isPinned?: boolean;
+  createdAt: Date;
+}
+;
+
+export const addActivity = (activity: any) => {
+  const newActivity = { ...activity, _id: Math.random().toString(36).substr(2, 9), timestamp: new Date() };
+  activities.push(newActivity);
+  return newActivity;
 };
