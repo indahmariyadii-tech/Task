@@ -1,6 +1,7 @@
 import mongoose, { Schema, model, models } from 'mongoose';
 
 export interface ITask {
+  _id?: string;
   title: string;
   category: string;
   status: 'todo' | 'in-progress' | 'done';
@@ -8,7 +9,8 @@ export interface ITask {
   dueDate?: Date;
   duration?: number; // in minutes
   completedAt?: Date;
-  createdAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const TaskSchema = new Schema<ITask>({
@@ -19,7 +21,8 @@ const TaskSchema = new Schema<ITask>({
   dueDate: { type: Date },
   duration: { type: Number, default: 0 },
   completedAt: { type: Date },
-  createdAt: { type: Date, default: Date.now },
+}, { 
+  timestamps: true 
 });
 
 export default models.Task || model<ITask>('Task', TaskSchema);

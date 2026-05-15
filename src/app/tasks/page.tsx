@@ -44,12 +44,18 @@ const TasksPage = () => {
   }, []);
 
   const toggleStatus = async (task: any) => {
-    const newStatus = task.status === 'done' ? 'todo' : 'done';
+    const isDone = task.status === 'done';
+    const newStatus = isDone ? 'todo' : 'done';
+    const completedAt = !isDone ? new Date() : null;
+
     try {
       const response = await fetch(`/api/tasks/${task._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ 
+          status: newStatus,
+          completedAt: completedAt
+        }),
       });
       if (response.ok) {
         fetchTasks();
@@ -58,6 +64,7 @@ const TasksPage = () => {
       console.error('Failed to update task:', error);
     }
   };
+
 
   const deleteTask = async (id: string) => {
     if (!confirm('Are you sure you want to delete this task?')) return;

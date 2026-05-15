@@ -21,18 +21,12 @@ import { isSameMonth } from 'date-fns/isSameMonth';
 import { isSameDay } from 'date-fns/isSameDay';
 import { addDays } from 'date-fns/addDays';
 import { eachDayOfInterval } from 'date-fns/eachDayOfInterval';
-
-interface Task {
-  _id: string;
-  title: string;
-  dueDate: string;
-  status: string;
-  priority: number;
-}
+import { ITask } from '@/models/Task';
 
 const CalendarPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<ITask[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchTasks = async () => {
@@ -181,11 +175,12 @@ const CalendarPage = () => {
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-xs text-text-muted flex items-center gap-1.5 font-medium">
                           <Clock size={12} className="text-secondary" />
-                          {format(new Date(task.dueDate), 'PPP')}
+                          {task.dueDate ? format(new Date(task.dueDate), 'PPP') : 'No due date'}
                         </span>
                         <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full border border-white/5 text-text-muted font-bold uppercase tracking-wider">
                           {task.category}
                         </span>
+
                       </div>
                     </div>
                   </div>
