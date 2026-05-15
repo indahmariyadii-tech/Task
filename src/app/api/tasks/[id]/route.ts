@@ -5,12 +5,13 @@ import * as dataStore from '@/lib/dataStore';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await dbConnect();
     const body = await request.json();
-    const task = await Task.findByIdAndUpdate(params.id, body, {
+    const task = await Task.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
     });
@@ -22,8 +23,9 @@ export async function PATCH(
     return NextResponse.json(task);
   } catch (error) {
     console.warn('MongoDB failed, using mock data');
+    const { id } = await params;
     const body = await request.json().catch(() => ({}));
-    const task = dataStore.updateTask(params.id, body);
+    const task = dataStore.updateTask(id, body);
     if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     return NextResponse.json(task);
   }
@@ -31,11 +33,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await dbConnect();
-    const task = await Task.findByIdAndDelete(params.id);
+    const task = await Task.findByIdAndDelete(id);
 
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
@@ -44,7 +47,8 @@ export async function DELETE(
     return NextResponse.json({ message: 'Task deleted successfully' });
   } catch (error) {
     console.warn('MongoDB failed, using mock data');
-    dataStore.deleteTask(params.id);
+    const { id } = await params;
+    dataStore.deleteTask(id);
     return NextResponse.json({ message: 'Task deleted successfully' });
   }
 }

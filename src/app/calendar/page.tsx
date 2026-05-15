@@ -102,7 +102,7 @@ const CalendarPage = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-7 grid-rows-6 h-[700px]">
+        <div className="grid grid-cols-7 grid-rows-6 h-700">
           {days.map((day, i) => {
             const dayTasks = getTasksForDay(day);
             const isToday = isSameDay(day, new Date());
@@ -130,70 +130,90 @@ const CalendarPage = () => {
                   </span>
                 </div>
 
-
-                  <div className="flex flex-col gap-1.5 mt-2">
-                    {dayTasks.slice(0, 3).map((task: any) => (
-                      <div 
-                        key={task._id} 
-                        className={`text-[10px] p-1.5 rounded-lg border flex items-center gap-1.5 transition-all hover:scale-[1.02] ${
-                          task.status === 'done' 
-                            ? 'bg-white/5 border-white/5 text-text-muted/50 line-through' 
-                            : 'bg-white/5 border-white/10 text-white shadow-sm'
-                        }`}
-                      >
-                        <div className={`w-1 h-3 rounded-full ${
-                          task.priority >= 4 ? 'bg-accent' : task.priority >= 3 ? 'bg-primary' : 'bg-secondary'
-                        }`} />
-                        <span className="truncate font-semibold">{task.title}</span>
-                      </div>
-                    ))}
-                    {dayTasks.length > 3 && (
-                      <div className="text-[10px] text-text-muted font-bold pl-1.5">
-                        + {dayTasks.length - 3} more
-                      </div>
-                    )}
-                  </div>
-
+                <div className="flex flex-col gap-1.5 mt-2">
+                  {dayTasks.slice(0, 3).map((task: any) => (
+                    <div 
+                      key={task._id} 
+                      className={`text-[10px] p-1.5 rounded-lg border flex items-center gap-1.5 transition-all hover:scale-[1.02] ${
+                        task.status === 'done' 
+                          ? 'bg-white/5 border-white/5 text-text-muted/50 line-through' 
+                          : 'bg-white/5 border-white/10 text-white shadow-sm'
+                      }`}
+                    >
+                      <div className={`w-1 h-3 rounded-full ${
+                        task.priority >= 4 ? 'bg-accent' : task.priority >= 3 ? 'bg-primary' : 'bg-secondary'
+                      }`} />
+                      <span className="truncate font-semibold">{task.title}</span>
+                    </div>
+                  ))}
+                  {dayTasks.length > 3 && (
+                    <div className="text-[10px] text-text-muted font-bold pl-1.5">
+                      + {dayTasks.length - 3} more
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
+          <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+            <CalendarIcon className="text-primary" size={24} />
+            Upcoming Events
+          </h2>
           <div className="flex flex-col gap-4">
-            {tasks.filter(t => t.dueDate && new Date(t.dueDate) >= new Date()).slice(0, 3).map((task) => (
-              <div key={task._id} className="card glass p-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-primary/10 text-primary">
-                    <CalendarIcon size={20} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold">{task.title}</h4>
-                    <span className="text-xs text-text-muted">
-                      {format(new Date(task.dueDate), 'PPP')} at {format(new Date(task.dueDate), 'p')}
-                    </span>
-                  </div>
-                </div>
-                <button className="btn-ghost text-xs">View Details</button>
+            {tasks.filter(t => t.dueDate && new Date(t.dueDate) >= new Date()).length === 0 ? (
+              <div className="card glass p-8 text-center text-text-muted">
+                No upcoming events scheduled.
               </div>
-            ))}
+            ) : (
+              tasks.filter(t => t.dueDate && new Date(t.dueDate) >= new Date()).slice(0, 3).map((task) => (
+                <div key={task._id} className="card glass p-5 flex items-center justify-between group hover:border-primary/30 transition-all">
+                  <div className="flex items-center gap-5">
+                    <div className="p-4 rounded-2xl bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary group-hover:text-white transition-all">
+                      <CalendarIcon size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg group-hover:text-primary transition-colors">{task.title}</h4>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs text-text-muted flex items-center gap-1.5 font-medium">
+                          <Clock size={12} className="text-secondary" />
+                          {format(new Date(task.dueDate), 'PPP')}
+                        </span>
+                        <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full border border-white/5 text-text-muted font-bold uppercase tracking-wider">
+                          {task.category}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <button className="btn-ghost text-xs px-6 py-2.5 rounded-xl hover:bg-primary hover:text-white border-0">Details</button>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-        <div className="card glass bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20 p-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Clock className="text-primary" size={24} />
-            <h3 className="font-bold">Next Deadline</h3>
+        <div className="flex flex-col gap-6">
+          <h2 className="text-2xl font-bold mb-0 opacity-0 invisible">Sidebar</h2>
+          <div className="card glass bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20 p-8 relative overflow-hidden group">
+            <div className="absolute -right-8 -top-8 w-24 h-24 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/30 transition-all" />
+            <div className="flex items-center gap-4 mb-6 relative z-10">
+              <div className="p-3 rounded-xl bg-white/10 text-white border border-white/20">
+                <Clock size={24} />
+              </div>
+              <h3 className="font-bold text-xl">Next Deadline</h3>
+            </div>
+            <p className="text-sm text-text-muted mb-8 leading-relaxed relative z-10">
+              Your next major task is due in <span className="text-white font-bold">2 days</span>. Make sure to stay on track!
+            </p>
+            <button className="btn-primary w-full shadow-lg shadow-primary/20 py-4 relative z-10">Set Reminder</button>
           </div>
-          <p className="text-sm text-text-muted mb-6">
-            Your next major task is due in 2 days. Make sure to stay on track!
-          </p>
-          <button className="btn-primary w-full">Set Reminder</button>
         </div>
       </div>
+
 
       <style jsx>{`
         .h-\[720px\] { height: 720px; }
