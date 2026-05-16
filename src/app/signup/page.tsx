@@ -143,6 +143,25 @@ const SignupPage = () => {
             </div>
           </form>
 
+          <div className="mt-8 flex items-center gap-4 text-text-dim">
+            <div className="h-px flex-1 bg-white/5" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Alternatively</span>
+            <div className="h-px flex-1 bg-white/5" />
+          </div>
+
+          <div className="mt-6">
+            <button 
+              type="button"
+              onClick={() => {
+                import('next-auth/react').then(({ signIn }) => signIn('google', { callbackUrl: '/' }));
+              }}
+              className="w-full flex items-center justify-center gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 hover:border-white/10 transition-all group"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white opacity-60 group-hover:opacity-100 transition-opacity"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+              <span className="text-sm font-bold text-white opacity-60 group-hover:opacity-100 transition-opacity">Continue with Google</span>
+            </button>
+          </div>
+
           <div className="mt-10 text-center">
             <p className="text-text-secondary text-sm font-medium">
               Already a member?{' '}

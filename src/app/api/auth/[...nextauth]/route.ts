@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
@@ -8,6 +9,10 @@ import { NextAuthOptions } from 'next-auth';
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    }),
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
@@ -47,9 +52,35 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      if (account?.provider === 'google') {
+        try {
+          await dbConnect();
+          const existingUser = await User.findOne({ email: user.email });
+          if (!existingUser) {
+            await User.create({
+              name: user.name,
+              email: user.email,
+              image: user.image,
+            });
+          }
+          return true;
+        } catch (error) {
+          console.error("Error during Google signIn:", error);
+          return false;
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id;
+        if (account?.provider === 'google') {
+          await dbConnect();
+          const dbUser = await User.findOne({ email: user.email });
+          token.id = dbUser?._id.toString();
+        } else {
+          token.id = user.id;
+        }
       }
       return token;
     },
