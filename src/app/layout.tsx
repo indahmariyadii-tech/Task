@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   description: "Experience professional productivity with TaskVibe. Manage tasks, notes, and focus with a high-end, distraction-free environment.",
   keywords: ["productivity", "task manager", "focus timer", "notes app", "saas", "dashboard", "minimalist", "premium"],
   authors: [{ name: "Indah Mariyadi" }],
+  creator: "Indah Mariyadi",
+  themeColor: "#05070A",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -42,10 +45,18 @@ export const metadata: Metadata = {
     title: "TaskVibe - Professional Productivity",
     description: "Manage tasks with intelligence and style.",
     images: ["/og.png"],
+    creator: "@indahmariyadi",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 

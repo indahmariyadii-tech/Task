@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /settings/
+
+Sitemap: https://task-gxnvo7qw4-indahmariyadii-techs-projects.vercel.app/sitemap.xml
