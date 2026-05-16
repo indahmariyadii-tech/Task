@@ -19,7 +19,7 @@ const SettingsPage = () => {
       <div className="max-w-3xl mx-auto">
         <header className="mb-12">
           <h1 className="text-4xl font-bold mb-2">Settings</h1>
-          <p className="text-text-muted">Personalize your TaskVibe experience</p>
+            <p className="text-text-secondary text-sm font-medium">Elevate your focus with Flow.</p>
         </header>
 
         <div className="flex flex-col gap-8">
@@ -35,7 +35,7 @@ const SettingsPage = () => {
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-bold text-text-muted uppercase tracking-wider">Email Address</label>
-                <input type="email" placeholder="email@example.com" defaultValue="user@taskvibe.io" className="bg-white/5 border-white/10" />
+                <input type="email" placeholder="email@example.com" defaultValue="user@flow.io" className="bg-white/5 border-white/10" />
               </div>
             </div>
           </section>
@@ -88,7 +88,7 @@ const SettingsPage = () => {
           </section>
 
           <div className="text-center pt-8">
-            <p className="text-xs text-text-muted mb-2">TaskVibe v1.0.4 - Premium Edition</p>
+            <p className="text-xs text-text-muted mb-2">Flow v1.0.4 - Premium Edition</p>
             <p className="text-[10px] text-text-muted/30">Made with ❤️ for productivity</p>
           </div>
         </div>

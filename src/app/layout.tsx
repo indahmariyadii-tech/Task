@@ -15,11 +15,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL('https://task-gxnvo7qw4-indahmariyadii-techs-projects.vercel.app'),
   title: {
-    default: "TaskVibe - Premium Task Manager",
-    template: "%s | TaskVibe"
+    default: "Flow - Premium Task Manager",
+    template: "%s | Flow"
   },
-  description: "Experience professional productivity with TaskVibe. Manage tasks, notes, and focus with a high-end, distraction-free environment.",
-  keywords: ["productivity", "task manager", "focus timer", "notes app", "saas", "dashboard", "minimalist", "premium"],
+  description: "Experience professional productivity with Flow. Manage tasks, notes, and focus with a high-end, distraction-free environment.",
+  keywords: ["productivity", "task manager", "focus timer", "notes app", "saas", "dashboard", "minimalist", "premium", "flow"],
   authors: [{ name: "Indah Mariyadi" }],
   creator: "Indah Mariyadi",
   themeColor: "#05070A",
@@ -28,21 +28,21 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://task-gxnvo7qw4-indahmariyadii-techs-projects.vercel.app",
-    title: "TaskVibe - Premium Task Management System",
-    description: "The ultimate platform for high-performers. Elevate your focus with TaskVibe.",
-    siteName: "TaskVibe",
+    title: "Flow - Premium Task Management System",
+    description: "The ultimate platform for high-performers. Elevate your focus with Flow.",
+    siteName: "Flow",
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "TaskVibe Premium Dashboard Preview",
+        alt: "Flow Premium Dashboard Preview",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "TaskVibe - Professional Productivity",
+    title: "Flow - Professional Productivity",
     description: "Manage tasks with intelligence and style.",
     images: ["/og.png"],
     creator: "@indahmariyadi",
