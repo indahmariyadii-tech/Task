@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
+import GithubProvider from 'next-auth/providers/github';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
@@ -12,6 +13,10 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    }),
+    GithubProvider({
+      clientId: process.env.GITHUB_ID as string,
+      clientSecret: process.env.GITHUB_SECRET as string,
     }),
     CredentialsProvider({
       name: 'Credentials',
@@ -53,7 +58,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === 'google') {
+      if (account?.provider === 'google' || account?.provider === 'github') {
         try {
           await dbConnect();
           const existingUser = await User.findOne({ email: user.email });
@@ -66,7 +71,7 @@ export const authOptions: NextAuthOptions = {
           }
           return true;
         } catch (error) {
-          console.error("Error during Google signIn:", error);
+          console.error(`Error during ${account.provider} signIn:`, error);
           return false;
         }
       }
@@ -74,7 +79,7 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user, account }) {
       if (user) {
-        if (account?.provider === 'google') {
+        if (account?.provider === 'google' || account?.provider === 'github') {
           await dbConnect();
           const dbUser = await User.findOne({ email: user.email });
           token.id = dbUser?._id.toString();
