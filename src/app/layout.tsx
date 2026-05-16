@@ -13,8 +13,40 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Flow - Premium Task Manager",
-  description: "Manage your daily tasks with style and intelligence",
+  metadataBase: new URL('https://task-gxnvo7qw4-indahmariyadii-techs-projects.vercel.app'),
+  title: {
+    default: "TaskVibe - Premium Task Manager",
+    template: "%s | TaskVibe"
+  },
+  description: "Experience professional productivity with TaskVibe. Manage tasks, notes, and focus with a high-end, distraction-free environment.",
+  keywords: ["productivity", "task manager", "focus timer", "notes app", "saas", "dashboard", "minimalist", "premium"],
+  authors: [{ name: "Indah Mariyadi" }],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://task-gxnvo7qw4-indahmariyadii-techs-projects.vercel.app",
+    title: "TaskVibe - Premium Task Management System",
+    description: "The ultimate platform for high-performers. Elevate your focus with TaskVibe.",
+    siteName: "TaskVibe",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "TaskVibe Premium Dashboard Preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TaskVibe - Professional Productivity",
+    description: "Manage tasks with intelligence and style.",
+    images: ["/og.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 import { Providers } from "@/components/Providers";
