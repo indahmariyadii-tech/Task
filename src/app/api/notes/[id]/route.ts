@@ -2,19 +2,27 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Note from '@/models/Note';
 import * as dataStore from '@/lib/dataStore';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     await dbConnect();
     const body = await request.json();
-    const note = await Note.findByIdAndUpdate(id, body, {
-      new: true,
-      runValidators: true,
-    });
+    const note = await Note.findOneAndUpdate(
+      { _id: id, userId: (session.user as any).id },
+      body,
+      { new: true, runValidators: true }
+    );
 
     if (!note) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 });
@@ -36,9 +44,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     await dbConnect();
-    const note = await Note.findByIdAndDelete(id);
+    const note = await Note.findOneAndDelete({ _id: id, userId: (session.user as any).id });
 
     if (!note) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 });

@@ -61,12 +61,18 @@ const Sidebar = () => {
       </nav>
 
       <div className="mt-auto">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          className="p-3 rounded-2xl text-text-secondary hover:text-white hover:bg-white/5 transition-all"
-        >
-          <Settings size={24} />
-        </motion.button>
+        <Link href="/settings">
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            className={`p-3 rounded-2xl transition-all duration-300 ${
+              pathname === '/settings' 
+                ? 'text-primary bg-primary/10' 
+                : 'text-text-secondary hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Settings size={24} strokeWidth={pathname === '/settings' ? 2.5 : 2} />
+          </motion.div>
+        </Link>
       </div>
     </aside>
   );

@@ -2,6 +2,7 @@ import mongoose, { Schema, model, models } from 'mongoose';
 
 export interface ITask {
   _id?: string;
+  userId: mongoose.Types.ObjectId;
   title: string;
   category: string;
   status: 'todo' | 'in-progress' | 'done';
@@ -14,6 +15,7 @@ export interface ITask {
 }
 
 const TaskSchema = new Schema<ITask>({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   title: { type: String, required: true },
   category: { type: String, default: 'General' },
   status: { type: String, enum: ['todo', 'in-progress', 'done'], default: 'todo' },
