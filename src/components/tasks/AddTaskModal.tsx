@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Calendar, Flag, Clock } from 'lucide-react';
+import { X, Plus, Calendar, Flag, Tag, AlertCircle } from 'lucide-react';
 
 interface AddTaskModalProps {
   isOpen: boolean;
@@ -27,7 +26,6 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, initialDate, onClos
     }
   }, [isOpen, initialDate]);
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -44,7 +42,6 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, initialDate, onClos
           dueDate: dueDate || undefined,
           status: 'todo',
         }),
-
       });
 
       if (response.ok) {
@@ -64,123 +61,126 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, initialDate, onClos
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          key="backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000]"
-        />
-      )}
-      {isOpen && (
-        <motion.div
-          key="modal"
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-[1001] px-4"
-        >
-
-            <div className="card glass p-8">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">New Task</h2>
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-background/80 backdrop-blur-md z-[1000]"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl z-[1001] px-4"
+          >
+            <div className="glass-card p-8 border-white/10 shadow-2xl">
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                    <Plus size={20} />
+                  </div>
+                  <h2 className="text-2xl font-display font-bold tracking-tight text-white">Create New Task</h2>
+                </div>
                 <button 
                   onClick={onClose}
-                  className="p-2 hover:bg-glass-bg rounded-lg text-text-muted transition-colors"
+                  className="p-2 hover:bg-white/5 rounded-xl text-text-dim hover:text-white transition-all"
                 >
                   <X size={20} />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-text-muted">Task Title</label>
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-dim ml-1">Objective</label>
                   <input
                     type="text"
-                    placeholder="What needs to be done?"
+                    placeholder="Capture your next breakthrough..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     autoFocus
-                    className="w-full"
+                    className="input-premium py-4 text-lg font-medium"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-text-muted">Category</label>
-                    <select 
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full"
-                    >
-                      <option value="General">General</option>
-                      <option value="Work">Work</option>
-                      <option value="Personal">Personal</option>
-                      <option value="Health">Health</option>
-                      <option value="Finance">Finance</option>
-                    </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-dim ml-1">Classification</label>
+                    <div className="relative">
+                      <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim" size={16} />
+                      <select 
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="input-premium pl-12 appearance-none cursor-pointer"
+                      >
+                        {['General', 'Work', 'Personal', 'Health', 'Finance', 'Study'].map(cat => (
+                          <option key={cat} value={cat} className="bg-card text-white">{cat}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-text-muted">Priority</label>
-                    <select 
-                      value={priority}
-                      onChange={(e) => setPriority(Number(e.target.value))}
-                      className="w-full"
-                    >
-                      <option value={1}>Low</option>
-                      <option value={3}>Medium</option>
-                      <option value={5}>High</option>
-                    </select>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-dim ml-1">Impact Level</label>
+                    <div className="relative">
+                      <Flag className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim" size={16} />
+                      <select 
+                        value={priority}
+                        onChange={(e) => setPriority(Number(e.target.value))}
+                        className="input-premium pl-12 appearance-none cursor-pointer"
+                      >
+                        <option value={1} className="bg-card text-white">Low - Minor</option>
+                        <option value={3} className="bg-card text-white">Medium - Standard</option>
+                        <option value={5} className="bg-card text-white">High - Critical</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-text-muted">Due Date</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-dim ml-1">Target Completion</label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim" size={16} />
                     <input
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="pl-10 w-full"
+                      className="input-premium pl-12"
                     />
                   </div>
                 </div>
 
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting || !title.trim()}
-                  className="btn-primary w-full justify-center mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? 'Creating...' : (
-                    <>
-                      <Plus size={20} />
-                      Create Task
-                    </>
-                  )}
-                </button>
+                <div className="pt-4 flex gap-4">
+                  <button 
+                    type="button"
+                    onClick={onClose}
+                    className="premium-button-ghost flex-1 justify-center"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isSubmitting || !title.trim()}
+                    className="premium-button flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed group"
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><Plus size={18} /></motion.div>
+                        Optimizing...
+                      </span>
+                    ) : (
+                      <>
+                        <Plus size={20} className="group-hover:rotate-90 transition-transform" />
+                        <span>Initialize Task</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </form>
             </div>
           </motion.div>
+        </>
       )}
-
-
-      <style jsx>{`
-        .fixed { position: fixed; }
-        .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-        .z-\[1000\] { z-index: 1000; }
-        .z-\[1001\] { z-index: 1001; }
-        .bg-black\/60 { background-color: rgba(0, 0, 0, 0.6); }
-        .backdrop-blur-sm { backdrop-filter: blur(4px); }
-        .left-1\/2 { left: 50%; }
-        .top-1\/2 { top: 50%; }
-        .-translate-x-1\/2 { transform: translateX(-50%); }
-        .-translate-y-1\/2 { transform: translateY(-50%); }
-        .max-w-md { max-width: 28rem; }
-      `}</style>
     </AnimatePresence>
   );
 };

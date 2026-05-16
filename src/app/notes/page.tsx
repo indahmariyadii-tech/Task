@@ -13,9 +13,9 @@ import {
   X,
   StickyNote,
   Pin,
-  PinOff
+  FileText,
+  Calendar
 } from 'lucide-react';
-
 
 interface Note {
   _id: string;
@@ -38,7 +38,6 @@ const NotesPage = () => {
       const response = await fetch('/api/notes');
       const data = await response.json();
       if (Array.isArray(data)) {
-        // Sort: Pinned first, then by date
         const sorted = data.sort((a, b) => {
           if (a.isPinned && !b.isPinned) return -1;
           if (!a.isPinned && b.isPinned) return 1;
@@ -60,14 +59,11 @@ const NotesPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isPinned: !note.isPinned }),
       });
-      if (response.ok) {
-        fetchNotes();
-      }
+      if (response.ok) fetchNotes();
     } catch (error) {
       console.error('Failed to toggle pin:', error);
     }
   };
-
 
   useEffect(() => {
     fetchNotes();
@@ -97,14 +93,10 @@ const NotesPage = () => {
   };
 
   const deleteNote = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+    if (!confirm('Discard this thought permanently?')) return;
     try {
-      const response = await fetch(`/api/notes/${id}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        fetchNotes();
-      }
+      const response = await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+      if (response.ok) fetchNotes();
     } catch (error) {
       console.error('Failed to delete note:', error);
     }
@@ -117,104 +109,116 @@ const NotesPage = () => {
 
   return (
     <AppLayout>
-      <div className="flex justify-between items-center mb-10">
-        <div>
-          <h1 className="text-4xl font-bold mb-2">Personal Notes</h1>
-          <p className="text-text-muted">Capture your thoughts and ideas</p>
-        </div>
-        <button 
-          onClick={() => {
-            setCurrentNote({ title: '', content: '', tags: [] });
-            setIsModalOpen(true);
-          }}
-          className="btn-primary"
-        >
-          <Plus size={20} />
-          Create Note
-        </button>
-      </div>
-
-      <div className="relative mb-8">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" size={20} />
-        <input 
-          type="text" 
-          placeholder="Search your notes..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-12 w-full max-w-xl"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading ? (
-          <div className="col-span-full text-center py-20 text-text-muted">Loading your notes...</div>
-        ) : filteredNotes.length === 0 ? (
-          <div className="col-span-full card glass text-center py-20">
-            <StickyNote className="mx-auto mb-4 text-text-muted" size={48} />
-            <p className="text-text-muted">No notes found. Start by creating one!</p>
+      <div className="flex flex-col gap-10">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-display font-bold tracking-tight text-white mb-2">Second Brain</h1>
+            <p className="text-text-dim font-medium">Archive your insights and build your knowledge base.</p>
           </div>
-        ) : (
-          filteredNotes.map((note, i) => (
-            <motion.div
-              key={note._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className={`card glass flex flex-col group relative overflow-visible ${note.isPinned ? 'border-primary/30 bg-primary/5' : ''}`}
-            >
-              {note.isPinned && (
-                <div className="absolute -top-3 -left-3 bg-primary text-white p-2 rounded-xl shadow-lg shadow-primary/40 z-10">
-                  <Pin size={14} fill="white" />
-                </div>
-              )}
-              
-              <div className="flex justify-between items-start mb-6">
-                <h3 className="text-xl font-bold line-clamp-1 group-hover:text-primary transition-colors">{note.title}</h3>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all translate-y-[-4px] group-hover:translate-y-0">
-                  <button 
-                    onClick={() => togglePin(note)}
-                    className={`p-2 rounded-xl transition-colors ${note.isPinned ? 'text-primary bg-primary/10' : 'text-text-muted hover:bg-white/5 hover:text-white'}`}
-                  >
-                    {note.isPinned ? <Pin size={16} /> : <Pin size={16} className="rotate-45" />}
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setCurrentNote(note);
-                      setIsModalOpen(true);
-                    }}
-                    className="p-2 hover:bg-white/5 rounded-xl text-text-muted hover:text-white"
-                  >
-                    <Edit3 size={16} />
-                  </button>
-                  <button 
-                    onClick={() => deleteNote(note._id)}
-                    className="p-2 hover:bg-red-500/10 rounded-xl text-text-muted hover:text-red-500"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-              
-              <p className="text-text-muted text-sm leading-relaxed line-clamp-4 mb-8 flex-1">
-                {note.content}
-              </p>
-              
-              <div className="flex flex-wrap gap-2 mb-4">
-                {note.tags.map((tag, j) => (
-                  <span key={j} className="text-[10px] bg-white/5 text-text-muted border border-white/5 px-2.5 py-1 rounded-lg font-bold uppercase tracking-wider group-hover:border-primary/20 transition-colors">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-              <div className="pt-4 border-t border-white/5 text-[10px] text-text-muted/40 font-medium">
-                Created on {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </div>
-            </motion.div>
-          ))
+          <button 
+            onClick={() => {
+              setCurrentNote({ title: '', content: '', tags: [] });
+              setIsModalOpen(true);
+            }}
+            className="premium-button"
+          >
+            <Plus size={18} />
+            <span>New Insight</span>
+          </button>
+        </header>
 
-        )}
+        <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
+          <div className="relative w-full max-w-xl group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim group-focus-within:text-primary transition-colors" size={20} />
+            <input 
+              type="text" 
+              placeholder="Search insights..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white/5 border border-border rounded-2xl pl-12 pr-4 py-3 text-sm outline-none focus:border-primary/40 transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AnimatePresence mode="popLayout">
+            {isLoading ? (
+              <div className="col-span-full py-24 text-center text-text-dim font-medium">Accessing archive...</div>
+            ) : filteredNotes.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="col-span-full py-24 text-center glass-card border-dashed"
+              >
+                <StickyNote className="mx-auto mb-4 text-text-dim" size={48} />
+                <h3 className="text-white font-bold text-xl mb-1">Knowledge Void</h3>
+                <p className="text-text-dim">No insights found in your second brain.</p>
+              </motion.div>
+            ) : (
+              filteredNotes.map((note, i) => (
+                <motion.div
+                  key={note._id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: i * 0.05 }}
+                  className={`glass-card group flex flex-col relative min-h-[280px] ${note.isPinned ? 'border-primary/30 ring-1 ring-primary/20' : ''}`}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-2">
+                      {note.isPinned && <Pin size={14} className="text-primary fill-primary" />}
+                      <h3 className="text-lg font-bold text-white line-clamp-1 group-hover:text-primary-light transition-colors">{note.title}</h3>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-y-[-4px] group-hover:translate-y-0">
+                      <button 
+                        onClick={() => togglePin(note)}
+                        className={`p-1.5 rounded-lg transition-colors ${note.isPinned ? 'text-primary bg-primary/10' : 'text-text-dim hover:text-white hover:bg-white/5'}`}
+                      >
+                        <Pin size={14} />
+                      </button>
+                      <button 
+                        onClick={() => { setCurrentNote(note); setIsModalOpen(true); }}
+                        className="p-1.5 rounded-lg text-text-dim hover:text-white hover:bg-white/5"
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                      <button 
+                        onClick={() => deleteNote(note._id)}
+                        className="p-1.5 rounded-lg text-text-dim hover:text-red-500 hover:bg-red-500/10"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-text-dim text-sm leading-relaxed line-clamp-6 mb-6">
+                      {note.content}
+                    </p>
+                  </div>
+                  
+                  <div className="mt-auto space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {note.tags.map((tag, j) => (
+                        <span key={j} className="text-[9px] font-black uppercase tracking-wider text-text-dim bg-white/5 px-2 py-1 rounded-md border border-white/5 group-hover:border-primary/20 transition-colors">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 pt-4 border-t border-border text-[10px] font-bold text-text-dim/60 uppercase">
+                      <Calendar size={10} />
+                      {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
+      {/* Note Editor Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <>
@@ -223,56 +227,63 @@ const NotesPage = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000]"
+              className="fixed inset-0 bg-background/80 backdrop-blur-md z-[1000]"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
               className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl z-[1001] px-4"
             >
-              <div className="card glass p-8">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold">{currentNote?._id ? 'Edit Note' : 'New Note'}</h2>
+              <div className="glass-card p-8 border-white/10 shadow-2xl">
+                <div className="flex justify-between items-center mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                      <FileText size={20} />
+                    </div>
+                    <h2 className="text-2xl font-display font-bold tracking-tight text-white">
+                      {currentNote?._id ? 'Refine Insight' : 'Capture Insight'}
+                    </h2>
+                  </div>
                   <button 
                     onClick={() => setIsModalOpen(false)}
-                    className="p-2 hover:bg-glass-bg rounded-lg text-text-muted transition-colors"
+                    className="p-2 hover:bg-white/5 rounded-xl text-text-dim hover:text-white transition-all"
                   >
                     <X size={20} />
                   </button>
                 </div>
 
-                <form onSubmit={handleSave} className="flex flex-col gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-text-muted">Title</label>
+                <form onSubmit={handleSave} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-dim ml-1">Title</label>
                     <input
                       type="text"
-                      placeholder="Note Title"
+                      placeholder="Give your insight a name..."
                       value={currentNote?.title || ''}
                       onChange={(e) => setCurrentNote({ ...currentNote!, title: e.target.value })}
-                      className="w-full"
+                      className="input-premium py-3 font-semibold"
                     />
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-text-muted">Content</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-dim ml-1">Content</label>
                     <textarea
-                      placeholder="Write your thoughts..."
-                      rows={8}
+                      placeholder="What's on your mind? Expand your thoughts here..."
+                      rows={10}
                       value={currentNote?.content || ''}
                       onChange={(e) => setCurrentNote({ ...currentNote!, content: e.target.value })}
-                      className="w-full"
+                      className="input-premium py-4 text-sm leading-relaxed resize-none"
                     />
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-text-muted">Tags (comma separated)</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-dim ml-1">Taxonomy (Comma Separated)</label>
                     <div className="relative">
-                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+                      <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim" size={16} />
                       <input
                         type="text"
-                        placeholder="ideas, project, reminder"
-                        className="pl-10 w-full"
+                        placeholder="e.g. strategy, personal, future"
+                        className="input-premium pl-12"
                         value={currentNote?.tags?.join(', ') || ''}
                         onChange={(e) => setCurrentNote({ 
                           ...currentNote!, 
@@ -282,36 +293,27 @@ const NotesPage = () => {
                     </div>
                   </div>
 
-                  <button type="submit" className="btn-primary w-full justify-center mt-4">
-                    {currentNote?._id ? 'Update Note' : 'Create Note'}
-                  </button>
+                  <div className="pt-4 flex gap-4">
+                    <button 
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="premium-button-ghost flex-1 justify-center"
+                    >
+                      Discard
+                    </button>
+                    <button type="submit" className="premium-button flex-1 justify-center">
+                      {currentNote?._id ? 'Update Archive' : 'Save to Archive'}
+                    </button>
+                  </div>
                 </form>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
-
-      <style jsx>{`
-        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-        .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-        .pl-10 { padding-left: 2.5rem; }
-        .pl-12 { padding-left: 3rem; }
-        .fixed { position: fixed; }
-        .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-        .z-\[1000\] { z-index: 1000; }
-        .z-\[1001\] { z-index: 1001; }
-        .bg-black\/60 { background-color: rgba(0, 0, 0, 0.6); }
-        .backdrop-blur-sm { backdrop-filter: blur(4px); }
-        .left-1\/2 { left: 50%; }
-        .top-1\/2 { top: 50%; }
-        .-translate-x-1\/2 { transform: translateX(-50%); }
-        .-translate-y-1\/2 { transform: translateY(-50%); }
-        .max-w-xl { max-width: 36rem; }
-        .max-w-2xl { max-width: 42rem; }
-      `}</style>
     </AppLayout>
   );
 };
 
 export default NotesPage;
+
