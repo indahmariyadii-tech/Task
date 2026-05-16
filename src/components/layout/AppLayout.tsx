@@ -1,11 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
+import AddTaskModal from '../tasks/AddTaskModal';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenModal = () => setIsTaskModalOpen(true);
+    window.addEventListener('open-task-modal', handleOpenModal);
+    return () => window.removeEventListener('open-task-modal', handleOpenModal);
+  }, []);
+
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background">
       {/* Ultra-Premium Ambient Layers */}
@@ -49,6 +58,12 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </footer>
       </div>
+
+      <AddTaskModal 
+        isOpen={isTaskModalOpen} 
+        onClose={() => setIsTaskModalOpen(false)} 
+        onTaskAdded={() => window.dispatchEvent(new CustomEvent('task-added'))}
+      />
     </div>
   );
 };

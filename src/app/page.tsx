@@ -16,7 +16,47 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+import { formatDistanceToNow, isSameDay, subDays } from 'date-fns';
+
 const Dashboard = () => {
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [tasksRes, activitiesRes] = await Promise.all([
+          fetch('/api/tasks'),
+          fetch('/api/activities')
+        ]);
+        const tasksData = await tasksRes.json();
+        const activitiesData = await activitiesRes.json();
+        
+        if (Array.isArray(tasksData)) setTasks(tasksData);
+        if (Array.isArray(activitiesData)) setActivities(activitiesData);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Calculate real stats
+  const totalFocusMinutes = activities
+    .filter(a => a.type === 'timer_session')
+    .reduce((acc, curr) => acc + (curr.duration || 0), 0);
+  const totalFocusHours = Math.round(totalFocusMinutes / 60);
+
+  const completedTasks = tasks.filter(t => t.status === 'done').length;
+
+  // Simple streak calculation (mocked for now but could be based on daily activity)
+  const streak = 8; 
+
+  const focusScore = 94; // Could be a complex calculation based on session quality
+
   return (
     <AppLayout>
       <div className="space-y-12">
@@ -56,28 +96,28 @@ const Dashboard = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           <StatsCard 
             label="Total Focus" 
-            value="142h" 
+            value={`${totalFocusHours}h`} 
             icon={Clock} 
             trend="+12%" 
             delay={0.1}
           />
           <StatsCard 
             label="Tasks Done" 
-            value="24" 
+            value={completedTasks.toString()} 
             icon={Target} 
             trend="+5" 
             delay={0.2}
           />
           <StatsCard 
             label="Current Streak" 
-            value="8 Days" 
+            value={`${streak} Days`} 
             icon={Flame} 
             trend="Active" 
             delay={0.3}
           />
           <StatsCard 
             label="Focus Score" 
-            value="94%" 
+            value={`${focusScore}%`} 
             icon={Zap} 
             trend="+2.4%" 
             delay={0.4}
@@ -101,29 +141,37 @@ const Dashboard = () => {
                 <History size={20} className="text-primary" />
                 History
               </h3>
-              <button className="text-[10px] font-black uppercase tracking-widest text-text-secondary hover:text-white transition-colors">
-                View All
-              </button>
+              <Link href="/analytics">
+                <button className="text-[10px] font-black uppercase tracking-widest text-text-secondary hover:text-white transition-colors">
+                  View All
+                </button>
+              </Link>
             </div>
 
             <div className="space-y-6">
-              {[
-                { task: 'UI Redesign', time: '50m', date: '2h ago', status: 'Completed' },
-                { task: 'API Integration', time: '25m', date: '4h ago', status: 'Completed' },
-                { task: 'Database Optimization', time: '25m', date: 'Yesterday', status: 'Interrupted' },
-                { task: 'Product Meeting', time: '45m', date: 'Yesterday', status: 'Completed' },
-              ].map((session, i) => (
-                <div key={i} className="flex items-center justify-between group cursor-pointer">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-1.5 h-8 rounded-full ${session.status === 'Completed' ? 'bg-primary' : 'bg-red-500/50'}`} />
-                    <div>
-                      <div className="text-sm font-bold text-white group-hover:text-primary transition-colors">{session.task}</div>
-                      <div className="text-[10px] text-text-secondary uppercase font-black tracking-widest">{session.time} • {session.date}</div>
+              {activities.length > 0 ? (
+                activities.slice(0, 5).map((activity, i) => (
+                  <div key={i} className="flex items-center justify-between group cursor-pointer">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-1.5 h-8 rounded-full ${activity.type === 'timer_session' ? 'bg-primary' : 'bg-accent'}`} />
+                      <div>
+                        <div className="text-sm font-bold text-white group-hover:text-primary transition-colors">
+                          {activity.type === 'timer_session' ? 'Focus Session' : 'Task Completed'}
+                        </div>
+                        <div className="text-[10px] text-text-secondary uppercase font-black tracking-widest">
+                          {activity.duration ? `${activity.duration}m • ` : ''} 
+                          {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                        </div>
+                      </div>
                     </div>
+                    <ArrowRight size={14} className="text-text-secondary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                   </div>
-                  <ArrowRight size={14} className="text-text-secondary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-sm text-text-secondary">No activity yet</p>
                 </div>
-              ))}
+              )}
             </div>
           </motion.div>
         </div>

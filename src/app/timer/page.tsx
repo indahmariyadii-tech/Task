@@ -7,12 +7,14 @@ import ControlButtons from '@/components/timer/ControlButtons';
 import TaskSelector from '@/components/timer/TaskSelector';
 import { motion } from 'framer-motion';
 import { Brain, Zap, Target } from 'lucide-react';
+import { ITask } from '@/models/Task';
 
 const FocusPage = () => {
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [totalTime, setTotalTime] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
+  const [selectedTask, setSelectedTask] = useState<ITask | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -20,13 +22,35 @@ const FocusPage = () => {
       interval = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
+    } else if (timeLeft === 0 && isActive) {
       setIsActive(false);
-      setSessionCount(prev => prev + 1);
-      // Play sound notification if possible
+      handleSessionComplete();
     }
     return () => clearInterval(interval);
   }, [isActive, timeLeft]);
+
+  const handleSessionComplete = async () => {
+    setSessionCount(prev => prev + 1);
+    
+    // Save activity to backend
+    try {
+      await fetch('/api/activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'timer_session',
+          duration: Math.round(totalTime / 60),
+          taskId: selectedTask?._id,
+          timestamp: new Date()
+        })
+      });
+      
+      // If a task was selected, maybe mark it as in-progress if it was todo
+      // Or just keep it as is.
+    } catch (err) {
+      console.error('Failed to save focus session:', err);
+    }
+  };
 
   const toggleTimer = () => setIsActive(!isActive);
   const resetTimer = () => {
@@ -66,14 +90,17 @@ const FocusPage = () => {
         </div>
 
         {/* Task Selector */}
-        <TaskSelector />
+        <TaskSelector 
+          selectedTask={selectedTask}
+          onSelect={setSelectedTask}
+        />
 
         {/* Main Timer Component */}
         <TimerCircle 
           timeLeft={timeLeft} 
           totalTime={totalTime} 
           isActive={isActive} 
-          label="Focus Session" 
+          label={selectedTask ? selectedTask.title : "Focus Session"} 
         />
 
         {/* Control Buttons */}
@@ -99,7 +126,7 @@ const FocusPage = () => {
             <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Current Streak</span>
             <span className="text-2xl font-display font-black text-primary">3</span>
           </div>
-        </div>
+        </motion.div>
       </div>
     </AppLayout>
   );
